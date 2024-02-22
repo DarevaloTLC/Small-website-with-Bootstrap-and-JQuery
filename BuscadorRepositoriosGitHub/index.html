@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscador de Repositorios de GitHub</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <div class="jumbotron">
+        <h1>Buscador de Repositorios de GitHub</h1>
+    </div>
+
+    <div class="mb-3">
+        <label for="usuarioInput" class="form-label">Nombre de Usuario de GitHub:</label>
+        <input type="text" class="form-control" id="usuarioInput" placeholder="Ingrese el nombre de usuario">
+    </div>
+
+    <button type="button" class="btn btn-primary" onclick="buscarRepositorios()">Buscar Repositorios</button>
+</div>
+
+<div id="tablaRepositorios" class="container mt-4"></div>
+
+<script>
+    function buscarRepositorios() {
+        // Obtener el valor del nombre de usuario
+        let usuario = document.getElementById("usuarioInput").value;
+
+        // Construir la URL de la API de GitHub para obtener los repositorios del usuario
+        let urlRepos = `https://api.github.com/users/${usuario}/repos`;
+
+        // Realizar una solicitud GET a la API de GitHub para repositorios
+        fetch(urlRepos)
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else if (response.status === 404) {
+                    throw new Error('Usuario no encontrado');
+                } else {
+                    throw new Error('Error en la solicitud');
+                }
+            })
+            .then(data => mostrarTablaRepositorios(data))
+            .catch(error => mostrarError(error));
+    }
+
+    function mostrarTablaRepositorios(repositorios) {
+        // Construir la tabla HTML
+        let tablaHTML = '<div class="jumbotron"><h1>Repositorios de GitHub</h1></div>';
+        tablaHTML += '<table class="table">';
+        tablaHTML += '<thead><tr><th>Nombre del Repositorio</th><th>Descripción</th><th>Estrellas-Seguidores</th></tr></thead>';
+        tablaHTML += '<tbody>';
+
+        // Iterar a través de los repositorios y agregar filas a la tabla
+        for (let i = 0; i < repositorios.length; i++) {
+            let descripcion = repositorios[i].description ? repositorios[i].description : 'Vacío';
+            tablaHTML += `<tr><td>${repositorios[i].name}</td><td>${descripcion}</td><td>${repositorios[i].stargazers_count}</td></tr>`;
+        }
+
+        tablaHTML += '</tbody></table>';
+
+        // Crear un Blob (Binary Large Object) con el contenido HTML
+        var blob = new Blob([`
+                <!DOCTYPE html>
+                <html lang="es">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Tabla de Repositorios</title>
+                    <!-- Agregar enlaces a Bootstrap CSS -->
+                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+                </head>
+                <body>
+                    ${tablaHTML}
+                </body>
+                </html>
+            `], { type: 'text/html' });
+
+        // Crear una URL para el Blob
+        var urlBlob = URL.createObjectURL(blob);
+
+        // Abrir una nueva pestaña con el contenido HTML
+        window.open(urlBlob, '_blank');
+
+        // Liberar recursos del Blob
+        URL.revokeObjectURL(urlBlob);
+    }
+
+    function mostrarError(error) {
+        // Mostrar un mensaje de error en caso de usuario no encontrado
+        document.getElementById('tablaRepositorios').innerHTML = `<div class="alert alert-danger"><strong>${error.message}</strong></div>`;
+    }
+</script>
+</body>
+</html>
