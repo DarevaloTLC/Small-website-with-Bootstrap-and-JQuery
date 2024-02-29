@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es" xmlns="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabla de Repositorios</title>
+    <!-- Agregar enlaces a Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+</head>
+<body>
+
+</body>
+<script>
+    //Obtiene la cadena de consulta de la URL
+    let queryString = window.location.search;
+    //Crear un objeto URLSearchParams a partir de la cadena de consulta
+    let urlParams = new URLSearchParams(queryString);
+    //Obtener el valor del parámetro usuario
+    let usuario = urlParams.get('usuario');
+    // Construir la URL de la API de GitHub para obtener los repositorios del usuario
+    let urlRepos = `https://api.github.com/users/${usuario}/repos`;
+    // Realizar una solicitud GET a la API de GitHub para repositorios
+    fetch(urlRepos)
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else if (response.status === 404) {
+                throw new Error('Usuario no encontrado');
+            } else {
+                throw new Error('Error en la solicitud');
+            }
+        })
+        .then(data => mostrarTablaRepositorios(data))
+        .catch(error => mostrarError(error));
+
+
+
+    function mostrarTablaRepositorios(repositorios) {
+        // Construir la tabla HTML
+        let tablaHTML = '<div class="jumbotron"><h1>Repositorios de GitHub</h1></div>';
+        tablaHTML += '<table class="table">';
+        tablaHTML += '<thead><tr><th>Nombre del Repositorio</th><th>Descripción</th><th>Estrellas-Seguidores</th></tr></thead>';
+        tablaHTML += '<tbody>';
+
+        // Iterar a través de los repositorios y agregar filas a la tabla
+        for (let i = 0; i < repositorios.length; i++) {
+            let descripcion = repositorios[i].description ? repositorios[i].description : 'Vacío';
+            tablaHTML += `<tr><td>${repositorios[i].name}</td><td>${descripcion}</td><td>${repositorios[i].stargazers_count}</td></tr>`;
+        }
+        tablaHTML += '</tbody></table>';
+        document.body.innerHTML = tablaHTML;
+    }
+
+
+</script>
+</html>
